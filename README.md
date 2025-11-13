@@ -20,6 +20,8 @@
 [![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
 [![Donate](https://img.shields.io/badge/donate-paypal-blue.svg)](https://paypal.me/bengubler)
 
+> 🎯 **Check out [ts-base](https://github.com/bgub/ts-base)** — A TypeScript library starter template featuring Biome, Vitest, tsdown, and automated releases.
+
 **Summary**
 
 Squirrelly is a modern, configurable, and blazing fast template engine implemented in JavaScript. It works out of the box with ExpressJS and the **full version** weighs only **~4KB gzipped**.
