@@ -37,7 +37,7 @@ describe('Compile to String test', () => {
       getConfig({ defaultFilter: 'filter1', autoEscape: false })
     )
     expect(str).toEqual(
-      "var tR='';tR+='hi ';tR+=c.l('F','filter1')(hey);if(cb){cb(null,tR)} return tR"
+      "var tR='';tR+='hi ';tR+=c.l('F',\"filter1\")(hey);if(cb){cb(null,tR)} return tR"
     )
   })
 

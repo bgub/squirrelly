@@ -125,7 +125,7 @@ export function compileScope (buff: Array<AstObject>, env: SqrlConfig) {
       // Let compiler do this
       if (type === 'i') {
         if (env.defaultFilter) {
-          content = "c.l('F','" + env.defaultFilter + "')(" + content + ')'
+          content = "c.l('F'," + JSON.stringify(env.defaultFilter) + ')(' + content + ')'
         }
         var filtered = filter(content, filters)
         if (!currentBlock.raw && env.autoEscape) {
