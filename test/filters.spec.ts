@@ -28,5 +28,15 @@ describe('Simple render checks', () => {
         '<script>Malicious XSS</script>'
       )
     })
+    it('Does not execute code from default filter names', () => {
+      var globalWithInjected = global as typeof global & { sqrlDefaultFilterInjected?: boolean }
+      globalWithInjected.sqrlDefaultFilterInjected = false
+      var payload = "e')(), global.sqrlDefaultFilterInjected=true, c.l('F','e"
+
+      expect(() =>
+        render('{{it.name}}', { name: 'Ada Lovelace' }, { defaultFilter: payload })
+      ).toThrow("Can't find filter")
+      expect(globalWithInjected.sqrlDefaultFilterInjected).toBe(false)
+    })
   })
 })
