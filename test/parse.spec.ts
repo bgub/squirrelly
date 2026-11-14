@@ -210,4 +210,16 @@ describe('parse test', () => {
       parse('{{@each(x) => hi }} Hey {{#else }} oops {{/ if}}', defaultConfig)
     }).toThrow()
   })
+
+  it('parses a large literal run in linear time', () => {
+    // Regression guard: locating tag openings must stay linear in the length
+    // of literal text between tags. The old `([^]*?)` + tag-open regex was
+    // O(n^2) here (~6.5s for 200KB); indexOf-based scanning is O(n).
+    var literal = 'x'.repeat(512 * 1024)
+    var start = Date.now()
+    var buff = parse(literal + '{{ hey }}' + literal, defaultConfig)
+    var elapsed = Date.now() - start
+    expect(buff).toEqual([literal, { f: [], c: 'hey', t: 'i' }, literal])
+    expect(elapsed).toBeLessThan(1000) // O(n^2) would take tens of seconds
+  })
 })
