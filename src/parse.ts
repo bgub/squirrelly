@@ -96,9 +96,15 @@ export default function parse (str: string, env: SqrlConfig): Array<AstObject> {
     'g'
   )
 
-  var tagOpenReg = new RegExp(
-    '([^]*?)' + escapeRegExp(env.tags[0]) + '(-|_)?\\s*(' + prefixes + ')?\\s*',
-    'g'
+  // Locate tag openings with a plain indexOf scan (linear), then capture only
+  // the opener's trim/prefix suffix with a sticky regex anchored at the match.
+  // The previous `([^]*?)` + tag-open regex was O(n^2) over long literal runs:
+  // a single failing exec() retries the lazy prefix at every start position.
+  var tagOpenStr = env.tags[0]
+  var tagOpenLen = tagOpenStr.length
+  var tagOpenSuffixReg = new RegExp(
+    '(-|_)?\\s*(' + prefixes + ')?\\s*',
+    'y'
   )
 
   var startInd = 0
@@ -226,7 +232,6 @@ export default function parse (str: string, env: SqrlConfig): Array<AstObject> {
       } else if (tagClose) {
         addAttrValue(i)
         startInd = i + m[0].length
-        tagOpenReg.lastIndex = startInd
         // console.log('tagClose: ' + startInd)
         trimNextLeftWs = wsControl
         if (slash && currentType === 'h') {
@@ -270,12 +275,16 @@ export default function parse (str: string, env: SqrlConfig): Array<AstObject> {
     }
 
     // Random TODO: parentObj.b doesn't need to have t: #
-    var tagOpenMatch
+    var tagOpenIndex
     // tslint:disable-next-line:no-conditional-assignment
-    while ((tagOpenMatch = tagOpenReg.exec(str)) !== null) {
-      var precedingString = tagOpenMatch[1]
-      var shouldTrimRightPrecedingString = tagOpenMatch[2]
-      var prefix = tagOpenMatch[3] || ''
+    while ((tagOpenIndex = str.indexOf(tagOpenStr, startInd)) !== -1) {
+      var precedingString = str.slice(startInd, tagOpenIndex)
+      tagOpenSuffixReg.lastIndex = tagOpenIndex + tagOpenLen
+      // Sticky match anchored right after the tag opening; every group is
+      // optional so this always matches (lastIndex advances past the suffix).
+      var tagOpenMatch = tagOpenSuffixReg.exec(str) as RegExpExecArray
+      var shouldTrimRightPrecedingString = tagOpenMatch[1]
+      var prefix = tagOpenMatch[2] || ''
       var prefixType: TagType | undefined
 
       for (var key in envPrefixes) {
@@ -286,13 +295,13 @@ export default function parse (str: string, env: SqrlConfig): Array<AstObject> {
       }
 
       pushString(precedingString, shouldTrimRightPrecedingString)
-      startInd = tagOpenMatch.index + tagOpenMatch[0].length
+      startInd = tagOpenSuffixReg.lastIndex
 
       if (!prefixType) {
         ParseErr('unrecognized tag type: ' + prefix, str, startInd)
       }
 
-      var currentObj = parseTag(tagOpenMatch.index, prefixType as TagType)
+      var currentObj = parseTag(tagOpenIndex, prefixType as TagType)
       // ===== NOW ADD THE OBJECT TO OUR BUFFER =====
 
       var currentType = currentObj.t
