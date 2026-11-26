@@ -1,5 +1,15 @@
-var fs = require('fs')
-var path = require('path')
+var fsModule: typeof import('fs') | undefined
+var pathModule: typeof import('path') | undefined
+
+function getFs (): typeof import('fs') {
+  if (!fsModule) fsModule = require('fs')
+  return fsModule!
+}
+
+function getPathModule (): typeof import('path') {
+  if (!pathModule) pathModule = require('path')
+  return pathModule!
+}
 var _BOM = /^\uFEFF/
 
 // express is set like: app.engine('html', require('squirrelly').renderFile)
@@ -34,11 +44,11 @@ interface FileConfig extends SqrlConfig {
  */
 
 function getWholeFilePath (name: string, parentfile: string, isDirectory?: boolean) {
-  var includePath = path.resolve(
-    isDirectory ? parentfile : path.dirname(parentfile), // returns directory the parent file is in
+  var includePath = getPathModule().resolve(
+    isDirectory ? parentfile : getPathModule().dirname(parentfile), // returns directory the parent file is in
     name // file
   )
-  var ext = path.extname(name)
+  var ext = getPathModule().extname(name)
   if (!ext) {
     includePath += '.sqrl'
   }
@@ -67,7 +77,7 @@ function getPath (path: string, options: SqrlConfig) {
     // Look relative to a passed filename first
     if (options.filename) {
       filePath = getWholeFilePath(path, options.filename)
-      if (fs.existsSync(filePath)) {
+      if (getFs().existsSync(filePath)) {
         includePath = filePath
       }
     }
@@ -77,7 +87,7 @@ function getPath (path: string, options: SqrlConfig) {
         Array.isArray(views) &&
         views.some(function (v) {
           filePath = getWholeFilePath(path, v, true)
-          return fs.existsSync(filePath)
+          return getFs().existsSync(filePath)
         })
       ) {
         includePath = filePath
@@ -91,7 +101,7 @@ function getPath (path: string, options: SqrlConfig) {
 }
 
 function readFile (filePath: string) {
-  return fs
+  return getFs()
     .readFileSync(filePath)
     .toString()
     .replace(_BOM, '') // TODO: is replacing BOM's necessary?
